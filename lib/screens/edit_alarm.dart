@@ -124,7 +124,7 @@ class _ExampleAlarmEditScreenState extends State<ExampleAlarmEditScreen> {
   Widget build(BuildContext context) {
     final hours = List<int>.generate(12, (index) => index);
     final minutes = List<int>.generate(60, (index) => index);
-    final ampm = ['AM', 'PM'];
+    final ampm = ['오전', '오후'];
 
     return Scaffold(
       body: SafeArea(
@@ -158,9 +158,9 @@ class _ExampleAlarmEditScreenState extends State<ExampleAlarmEditScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   SizedBox(
-                    width: 60,
+                    width: 200,
                     child: CupertinoPicker(
-                      itemExtent: 32,
+                      itemExtent: 100,
                       onSelectedItemChanged: (index) {
                         setState(() {
                           selectedDateTime = selectedDateTime.copyWith(
@@ -171,7 +171,11 @@ class _ExampleAlarmEditScreenState extends State<ExampleAlarmEditScreen> {
                         });
                       },
                       children: ampm.map((ap) {
-                        return Center(child: Text(ap));
+                        return Center(child:
+                        Text(
+                          style: TextStyle(fontSize: 60),
+                          ap,
+                        ));
                       }).toList(),
                       scrollController: FixedExtentScrollController(
                         initialItem: selectedDateTime.hour >= 12 ? 1 : 0,
@@ -181,9 +185,9 @@ class _ExampleAlarmEditScreenState extends State<ExampleAlarmEditScreen> {
                   ),
                   const SizedBox(width: 10),
                   SizedBox(
-                    width: 80,
+                    width: 200,
                     child: CupertinoPicker(
-                      itemExtent: 40,
+                      itemExtent: 100,
                       onSelectedItemChanged: (index) {
                         setState(() {
                           selectedDateTime = selectedDateTime.copyWith(
@@ -196,7 +200,7 @@ class _ExampleAlarmEditScreenState extends State<ExampleAlarmEditScreen> {
                         return Center(
                           child: Text(
                             hour.toString().padLeft(2, '0'),
-                            style: const TextStyle(fontSize: 28),
+                            style: const TextStyle(fontSize: 80),
                           ),
                         );
                       }).toList(),
@@ -208,12 +212,12 @@ class _ExampleAlarmEditScreenState extends State<ExampleAlarmEditScreen> {
                   ),
                   const Text(
                     ':',
-                    style: TextStyle(fontSize: 28),
+                    style: TextStyle(fontSize: 80),
                   ),
                   SizedBox(
-                    width: 80,
+                    width: 200,
                     child: CupertinoPicker(
-                      itemExtent: 40,
+                      itemExtent: 100,
                       onSelectedItemChanged: (index) {
                         setState(() {
                           selectedDateTime =
@@ -224,7 +228,7 @@ class _ExampleAlarmEditScreenState extends State<ExampleAlarmEditScreen> {
                         return Center(
                           child: Text(
                             minute.toString().padLeft(2, '0'),
-                            style: const TextStyle(fontSize: 28),
+                            style: const TextStyle(fontSize: 80),
                           ),
                         );
                       }).toList(),
@@ -259,16 +263,31 @@ class _ExampleAlarmEditScreenState extends State<ExampleAlarmEditScreen> {
                 },
               ),
               const SizedBox(height: 10),
-              SwitchListTile(
-                title: const Text('알람음'),
-                value: false,
-                onChanged: (value) {},
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    '소리',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  Switch(
+                    value: loopAudio,
+                    onChanged: (value) => setState(() => loopAudio = value),
+                  ),
+                ],
               ),
-              const SizedBox(height: 10),
-              SwitchListTile(
-                title: const Text('진동'),
-                value: vibrate,
-                onChanged: (value) => setState(() => vibrate = value),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    '진동',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  Switch(
+                    value: vibrate,
+                    onChanged: (value) => setState(() => vibrate = value),
+                  ),
+                ],
               ),
               const Spacer(),
               if (!creating)
