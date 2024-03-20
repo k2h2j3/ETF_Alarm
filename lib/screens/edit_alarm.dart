@@ -1,5 +1,6 @@
 import 'package:alarm/alarm.dart';
 import 'package:alarm/model/alarm_settings.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class ExampleAlarmEditScreen extends StatefulWidget {
@@ -14,6 +15,9 @@ class ExampleAlarmEditScreen extends StatefulWidget {
 
 class _ExampleAlarmEditScreenState extends State<ExampleAlarmEditScreen> {
   bool loading = false;
+  // 알람 이름을 저장할 변수 추가
+  String alarmName = '';
+
 
   late bool creating;
   late DateTime selectedDateTime;
@@ -118,172 +122,169 @@ class _ExampleAlarmEditScreenState extends State<ExampleAlarmEditScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 30),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    final hours = List<int>.generate(12, (index) => index);
+    final minutes = List<int>.generate(60, (index) => index);
+    final ampm = ['AM', 'PM'];
+
+    return Scaffold(
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: Text(
-                  "Cancel",
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleLarge!
-                      .copyWith(color: Colors.blueAccent),
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Cancel'),
+                  ),
+                  TextButton(
+                    onPressed: saveAlarm,
+                    child: loading
+                        ? const CircularProgressIndicator()
+                        : const Text('Save'),
+                  ),
+                ],
               ),
-              TextButton(
-                onPressed: saveAlarm,
-                child: loading
-                    ? const CircularProgressIndicator()
-                    : Text(
-                  "Save",
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleLarge!
-                      .copyWith(color: Colors.blueAccent),
-                ),
-              ),
-            ],
-          ),
-          Text(
-            getDay(),
-            style: Theme.of(context)
-                .textTheme
-                .titleMedium!
-                .copyWith(color: Colors.blueAccent.withOpacity(0.8)),
-          ),
-          RawMaterialButton(
-            onPressed: pickTime,
-            fillColor: Colors.grey[200],
-            child: Container(
-              margin: const EdgeInsets.all(20),
-              child: Text(
-                TimeOfDay.fromDateTime(selectedDateTime).format(context),
-                style: Theme.of(context)
-                    .textTheme
-                    .displayMedium!
-                    .copyWith(color: Colors.blueAccent),
-              ),
-            ),
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
+              const SizedBox(height: 20),
               Text(
-                'Loop alarm audio',
+                getDay(),
                 style: Theme.of(context).textTheme.titleMedium,
               ),
-              Switch(
-                value: loopAudio,
-                onChanged: (value) => setState(() => loopAudio = value),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    width: 60,
+                    child: CupertinoPicker(
+                      itemExtent: 32,
+                      onSelectedItemChanged: (index) {
+                        setState(() {
+                          selectedDateTime = selectedDateTime.copyWith(
+                            hour: selectedDateTime.hour >= 12
+                                ? selectedDateTime.hour - 12
+                                : selectedDateTime.hour + 12,
+                          );
+                        });
+                      },
+                      children: ampm.map((ap) {
+                        return Center(child: Text(ap));
+                      }).toList(),
+                      scrollController: FixedExtentScrollController(
+                        initialItem: selectedDateTime.hour >= 12 ? 1 : 0,
+                      ),
+                      looping: true,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  SizedBox(
+                    width: 80,
+                    child: CupertinoPicker(
+                      itemExtent: 40,
+                      onSelectedItemChanged: (index) {
+                        setState(() {
+                          selectedDateTime = selectedDateTime.copyWith(
+                            hour: hours[index] +
+                                (selectedDateTime.hour >= 12 ? 12 : 0),
+                          );
+                        });
+                      },
+                      children: hours.map((hour) {
+                        return Center(
+                          child: Text(
+                            hour.toString().padLeft(2, '0'),
+                            style: const TextStyle(fontSize: 28),
+                          ),
+                        );
+                      }).toList(),
+                      scrollController: FixedExtentScrollController(
+                        initialItem: selectedDateTime.hour % 12,
+                      ),
+                      looping: true,
+                    ),
+                  ),
+                  const Text(
+                    ':',
+                    style: TextStyle(fontSize: 28),
+                  ),
+                  SizedBox(
+                    width: 80,
+                    child: CupertinoPicker(
+                      itemExtent: 40,
+                      onSelectedItemChanged: (index) {
+                        setState(() {
+                          selectedDateTime =
+                              selectedDateTime.copyWith(minute: minutes[index]);
+                        });
+                      },
+                      children: minutes.map((minute) {
+                        return Center(
+                          child: Text(
+                            minute.toString().padLeft(2, '0'),
+                            style: const TextStyle(fontSize: 28),
+                          ),
+                        );
+                      }).toList(),
+                      scrollController: FixedExtentScrollController(
+                        initialItem: selectedDateTime.minute,
+                      ),
+                      looping: true,
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Vibrate',
-                style: Theme.of(context).textTheme.titleMedium,
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Icon(Icons.label, color: Colors.grey[400]),
+                  const SizedBox(width: 10),
+                  const Text('알림 설정'),
+                ],
               ),
-              Switch(
+              const SizedBox(height: 20),
+              // 알람 이름 입력 필드 추가
+              TextFormField(
+                initialValue: alarmName,
+                decoration: const InputDecoration(
+                  labelText: '',
+                  border: OutlineInputBorder(),
+                ),
+                onChanged: (value) {
+                  setState(() {
+                    alarmName = value;
+                  });
+                },
+              ),
+              const SizedBox(height: 10),
+              SwitchListTile(
+                title: const Text('알람음'),
+                value: false,
+                onChanged: (value) {},
+              ),
+              const SizedBox(height: 10),
+              SwitchListTile(
+                title: const Text('진동'),
                 value: vibrate,
                 onChanged: (value) => setState(() => vibrate = value),
               ),
-            ],
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Sound',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              DropdownButton(
-                value: assetAudio,
-                items: const [
-                  DropdownMenuItem<String>(
-                    value: 'assets/marimba.mp3',
-                    child: Text('Marimba'),
-                  ),
-                  DropdownMenuItem<String>(
-                    value: 'assets/nokia.mp3',
-                    child: Text('Nokia'),
-                  ),
-                  DropdownMenuItem<String>(
-                    value: 'assets/mozart.mp3',
-                    child: Text('Mozart'),
-                  ),
-                  DropdownMenuItem<String>(
-                    value: 'assets/star_wars.mp3',
-                    child: Text('Star Wars'),
-                  ),
-                  DropdownMenuItem<String>(
-                    value: 'assets/one_piece.mp3',
-                    child: Text('One Piece'),
-                  ),
-                ],
-                onChanged: (value) => setState(() => assetAudio = value!),
-              ),
-            ],
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Custom volume',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              Switch(
-                value: volume != null,
-                onChanged: (value) =>
-                    setState(() => volume = value ? 0.5 : null),
-              ),
-            ],
-          ),
-          SizedBox(
-            height: 30,
-            child: volume != null
-                ? Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Icon(
-                  volume! > 0.7
-                      ? Icons.volume_up_rounded
-                      : volume! > 0.1
-                      ? Icons.volume_down_rounded
-                      : Icons.volume_mute_rounded,
-                ),
-                Expanded(
-                  child: Slider(
-                    value: volume!,
-                    onChanged: (value) {
-                      setState(() => volume = value);
-                    },
+              const Spacer(),
+              if (!creating)
+                TextButton(
+                  onPressed: deleteAlarm,
+                  child: Text(
+                    'Delete Alarm',
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleMedium!
+                        .copyWith(color: Colors.red),
                   ),
                 ),
-              ],
-            )
-                : const SizedBox(),
+            ],
           ),
-          if (!creating)
-            TextButton(
-              onPressed: deleteAlarm,
-              child: Text(
-                'Delete Alarm',
-                style: Theme.of(context)
-                    .textTheme
-                    .titleMedium!
-                    .copyWith(color: Colors.red),
-              ),
-            ),
-          const SizedBox(),
-        ],
+        ),
       ),
     );
   }

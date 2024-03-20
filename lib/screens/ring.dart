@@ -41,7 +41,7 @@ class ExampleAlarmRingScreen extends StatelessWidget {
                     ).then((_) => Navigator.pop(context));
                   },
                   child: Text(
-                    "Snooze",
+                    "알람연장",
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                 ),
@@ -51,7 +51,7 @@ class ExampleAlarmRingScreen extends StatelessWidget {
                         .then((_) => Navigator.pop(context));
                   },
                   child: Text(
-                    "Stop",
+                    "알람끄기",
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                 ),
