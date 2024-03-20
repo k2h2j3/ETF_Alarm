@@ -267,19 +267,6 @@ class _ExampleAlarmEditScreenState extends State<ExampleAlarmEditScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    '소리',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  Switch(
-                    value: loopAudio,
-                    onChanged: (value) => setState(() => loopAudio = value),
-                  ),
-                ],
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
                     '진동',
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
