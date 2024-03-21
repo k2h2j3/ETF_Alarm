@@ -120,16 +120,21 @@ class _ExampleAlarmHomeScreenState extends State<ExampleAlarmHomeScreen> {
           itemCount: alarms.length,
           separatorBuilder: (context, index) => const Divider(height: 1),
           itemBuilder: (context, index) {
-            return ExampleAlarmTile(
-              key: Key(alarms[index].id.toString()),
-              title: TimeOfDay(
-                hour: alarms[index].dateTime.hour,
-                minute: alarms[index].dateTime.minute,
-              ).format(context),
-              onPressed: () => navigateToAlarmScreen(alarms[index]),
-              onDismissed: () {
-                Alarm.stop(alarms[index].id).then((_) => loadAlarms());
-              },
+            return Row(
+              children: [
+                ExampleAlarmTile(
+                  key: Key(alarms[index].id.toString()),
+                  title: TimeOfDay(
+                    hour: alarms[index].dateTime.hour,
+                    minute: alarms[index].dateTime.minute,
+                  ).format(context),
+                  onPressed: () => navigateToAlarmScreen(alarms[index]),
+                  onDismissed: () {
+                    Alarm.stop(alarms[index].id).then((_) => loadAlarms());
+                  },
+                ),
+                Text(alarms[index].notificationBody),
+              ],
             );
           },
         )
