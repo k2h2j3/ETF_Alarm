@@ -64,29 +64,6 @@ class _ExampleAlarmEditScreenState extends State<ExampleAlarmEditScreen> {
     }
   }
 
-  Future<void> pickTime() async {
-    final res = await showTimePicker(
-      initialTime: TimeOfDay.fromDateTime(selectedDateTime),
-      context: context,
-    );
-
-    if (res != null) {
-      setState(() {
-        final DateTime now = DateTime.now();
-        selectedDateTime = now.copyWith(
-          hour: res.hour,
-          minute: res.minute,
-          second: 0,
-          millisecond: 0,
-          microsecond: 0,
-        );
-        if (selectedDateTime.isBefore(now)) {
-          selectedDateTime = selectedDateTime.add(const Duration(days: 1));
-        }
-      });
-    }
-  }
-
   AlarmSettings buildAlarmSettings() {
     final id = creating
         ? DateTime.now().millisecondsSinceEpoch % 10000
@@ -100,7 +77,7 @@ class _ExampleAlarmEditScreenState extends State<ExampleAlarmEditScreen> {
       volume: volume,
       assetAudioPath: assetAudio,
       notificationTitle: 'Alarm example',
-      notificationBody: 'Your alarm ($id) is ringing',
+      notificationBody: alarmName,
     );
     return alarmSettings;
   }
@@ -256,6 +233,7 @@ class _ExampleAlarmEditScreenState extends State<ExampleAlarmEditScreen> {
                   labelText: '',
                   border: OutlineInputBorder(),
                 ),
+                maxLength: 20,
                 onChanged: (value) {
                   setState(() {
                     alarmName = value;

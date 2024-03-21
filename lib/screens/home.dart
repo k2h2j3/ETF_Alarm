@@ -34,6 +34,7 @@ class _ExampleAlarmHomeScreenState extends State<ExampleAlarmHomeScreen> {
     );
   }
 
+  // 알람 리스트를 가져와서 해당 알람들을 시간순으로 정렬
   void loadAlarms() {
     setState(() {
       alarms = Alarm.getAlarms();
@@ -61,7 +62,7 @@ class _ExampleAlarmHomeScreenState extends State<ExampleAlarmHomeScreen> {
         ),
         builder: (context) {
           return FractionallySizedBox(
-            heightFactor: 0.75,
+            heightFactor: 1,
             child: ExampleAlarmEditScreen(alarmSettings: settings),
           );
         });
