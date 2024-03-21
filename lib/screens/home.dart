@@ -18,6 +18,7 @@ class ExampleAlarmHomeScreen extends StatefulWidget {
 
 class _ExampleAlarmHomeScreenState extends State<ExampleAlarmHomeScreen> {
   late List<AlarmSettings> alarms;
+  late List<bool> enabledAlarms;
 
   static StreamSubscription<AlarmSettings>? subscription;
 
@@ -39,35 +40,55 @@ class _ExampleAlarmHomeScreenState extends State<ExampleAlarmHomeScreen> {
     setState(() {
       alarms = Alarm.getAlarms();
       alarms.sort((a, b) => a.dateTime.isBefore(b.dateTime) ? 0 : 1);
+      enabledAlarms = List<bool>.filled(alarms.length, true);
+
+      for (int i = 0; i < alarms.length; i++) {
+        if (!enabledAlarms[i]) {
+          Alarm.stop(alarms[i].id);
+        }
+      }
     });
   }
 
   Future<void> navigateToRingScreen(AlarmSettings alarmSettings) async {
-    await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) =>
-            ExampleAlarmRingScreen(alarmSettings: alarmSettings),
-      ),
-    );
-    loadAlarms();
+    final index = alarms.indexWhere((alarm) => alarm.id == alarmSettings.id);
+    if (index != -1 && enabledAlarms[index]) {
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) =>
+              ExampleAlarmRingScreen(alarmSettings: alarmSettings),
+        ),
+      );
+      setState(() {
+        enabledAlarms[index] = false;
+      });
+    }
   }
 
   Future<void> navigateToAlarmScreen(AlarmSettings? settings) async {
     final res = await showModalBottomSheet<bool?>(
-        context: context,
-        isScrollControlled: true,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10.0),
-        ),
-        builder: (context) {
-          return FractionallySizedBox(
-            heightFactor: 1,
-            child: ExampleAlarmEditScreen(alarmSettings: settings),
-          );
-        });
+      context: context,
+      isScrollControlled: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10.0),
+      ),
+      builder: (context) {
+        return FractionallySizedBox(
+          heightFactor: 1,
+          child: ExampleAlarmEditScreen(alarmSettings: settings),
+        );
+      },
+    );
 
-    if (res != null && res == true) loadAlarms();
+    if (res != null && res == true) {
+      loadAlarms();
+      final index = alarms.indexWhere((alarm) => alarm.id == settings!.id);
+      if (index != -1) {
+        enabledAlarms[index] = true;
+        Alarm.set(alarmSettings: alarms[index]);
+      }
+    }
   }
 
   Future<void> checkAndroidNotificationPermission() async {
@@ -122,18 +143,32 @@ class _ExampleAlarmHomeScreenState extends State<ExampleAlarmHomeScreen> {
           itemBuilder: (context, index) {
             return Row(
               children: [
-                ExampleAlarmTile(
-                  key: Key(alarms[index].id.toString()),
-                  title: TimeOfDay(
-                    hour: alarms[index].dateTime.hour,
-                    minute: alarms[index].dateTime.minute,
-                  ).format(context),
-                  onPressed: () => navigateToAlarmScreen(alarms[index]),
-                  onDismissed: () {
-                    Alarm.stop(alarms[index].id).then((_) => loadAlarms());
+                Expanded(
+                  child: ExampleAlarmTile(
+                    key: Key(alarms[index].id.toString()),
+                    title: TimeOfDay(
+                      hour: alarms[index].dateTime.hour,
+                      minute: alarms[index].dateTime.minute,
+                    ).format(context),
+                    onPressed: () => navigateToAlarmScreen(alarms[index]),
+                    onDismissed: () {
+                      Alarm.stop(alarms[index].id).then((_) => loadAlarms());
+                    },
+                  ),
+                ),
+                Switch(
+                  value: enabledAlarms[index],
+                  onChanged: (value) {
+                    setState(() {
+                      enabledAlarms[index] = value;
+                      if (value) {
+                        Alarm.set(alarmSettings: alarms[index]);
+                      } else {
+                        Alarm.stop(alarms[index].id);
+                      }
+                    });
                   },
                 ),
-                Text(alarms[index].notificationBody),
               ],
             );
           },
