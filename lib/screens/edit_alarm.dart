@@ -25,6 +25,7 @@ class _ExampleAlarmEditScreenState extends State<ExampleAlarmEditScreen> {
   late bool vibrate;
   late double? volume;
   late String assetAudio;
+  late String notificationBody;
 
   @override
   void initState() {
@@ -38,12 +39,16 @@ class _ExampleAlarmEditScreenState extends State<ExampleAlarmEditScreen> {
       vibrate = true;
       volume = null;
       assetAudio = 'assets/marimba.mp3';
+      notificationBody = '';
+      alarmName = '';
     } else {
       selectedDateTime = widget.alarmSettings!.dateTime;
       loopAudio = widget.alarmSettings!.loopAudio;
       vibrate = widget.alarmSettings!.vibrate;
       volume = widget.alarmSettings!.volume;
       assetAudio = widget.alarmSettings!.assetAudioPath;
+      notificationBody = widget.alarmSettings!.notificationBody;
+      alarmName = widget.alarmSettings!.notificationBody;
     }
   }
 
