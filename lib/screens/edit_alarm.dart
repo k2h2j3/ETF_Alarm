@@ -158,9 +158,9 @@ class _ExampleAlarmEditScreenState extends State<ExampleAlarmEditScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   SizedBox(
-                    width: 200,
+                    width: 100,
                     child: CupertinoPicker(
-                      itemExtent: 100,
+                      itemExtent: 50,
                       onSelectedItemChanged: (index) {
                         setState(() {
                           selectedDateTime = selectedDateTime.copyWith(
@@ -173,7 +173,7 @@ class _ExampleAlarmEditScreenState extends State<ExampleAlarmEditScreen> {
                       children: ampm.map((ap) {
                         return Center(child:
                         Text(
-                          style: TextStyle(fontSize: 60),
+                          style: TextStyle(fontSize: 30),
                           ap,
                         ));
                       }).toList(),
@@ -185,9 +185,9 @@ class _ExampleAlarmEditScreenState extends State<ExampleAlarmEditScreen> {
                   ),
                   const SizedBox(width: 10),
                   SizedBox(
-                    width: 200,
+                    width: 100,
                     child: CupertinoPicker(
-                      itemExtent: 100,
+                      itemExtent: 50,
                       onSelectedItemChanged: (index) {
                         setState(() {
                           selectedDateTime = selectedDateTime.copyWith(
@@ -200,7 +200,7 @@ class _ExampleAlarmEditScreenState extends State<ExampleAlarmEditScreen> {
                         return Center(
                           child: Text(
                             hour.toString().padLeft(2, '0'),
-                            style: const TextStyle(fontSize: 80),
+                            style: const TextStyle(fontSize: 40),
                           ),
                         );
                       }).toList(),
@@ -212,12 +212,12 @@ class _ExampleAlarmEditScreenState extends State<ExampleAlarmEditScreen> {
                   ),
                   const Text(
                     ':',
-                    style: TextStyle(fontSize: 80),
+                    style: TextStyle(fontSize: 40),
                   ),
                   SizedBox(
-                    width: 200,
+                    width: 100,
                     child: CupertinoPicker(
-                      itemExtent: 100,
+                      itemExtent: 50,
                       onSelectedItemChanged: (index) {
                         setState(() {
                           selectedDateTime =
@@ -228,7 +228,7 @@ class _ExampleAlarmEditScreenState extends State<ExampleAlarmEditScreen> {
                         return Center(
                           child: Text(
                             minute.toString().padLeft(2, '0'),
-                            style: const TextStyle(fontSize: 80),
+                            style: const TextStyle(fontSize: 40),
                           ),
                         );
                       }).toList(),
