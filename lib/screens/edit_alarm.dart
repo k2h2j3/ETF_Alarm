@@ -87,18 +87,41 @@ class _ExampleAlarmEditScreenState extends State<ExampleAlarmEditScreen> {
     return alarmSettings;
   }
 
-  void saveAlarm() {
+  void saveAlarm() async {
     if (loading) return;
     setState(() => loading = true);
-    Alarm.set(alarmSettings: buildAlarmSettings()).then((res) {
-      if (res) Navigator.pop(context, true);
+
+    final now = DateTime.now();
+    DateTime alarmDateTime = selectedDateTime;
+
+    if (alarmDateTime.isBefore(now)) {
+      alarmDateTime = alarmDateTime.add(const Duration(days: 1));
+    }
+
+    final alarmSettings = AlarmSettings(
+      id: creating ? DateTime.now().millisecondsSinceEpoch % 10000 : widget.alarmSettings!.id,
+      dateTime: alarmDateTime,
+      loopAudio: loopAudio,
+      vibrate: vibrate,
+      volume: volume,
+      assetAudioPath: assetAudio,
+      notificationTitle: 'Alarm example',
+      notificationBody: alarmName,
+    );
+
+    final res = await Alarm.set(alarmSettings: alarmSettings);
+    if (res) {
+      Navigator.pop(context, alarmSettings);
+    } else {
       setState(() => loading = false);
-    });
+    }
   }
 
   void deleteAlarm() {
     Alarm.stop(widget.alarmSettings!.id).then((res) {
-      if (res) Navigator.pop(context, true);
+      if (res) {
+        Navigator.pop(context, null);
+      }
     });
   }
 

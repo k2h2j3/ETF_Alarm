@@ -36,18 +36,39 @@ class _ExampleAlarmHomeScreenState extends State<ExampleAlarmHomeScreen> {
   }
 
   // 알람 리스트를 가져와서 해당 알람들을 시간순으로 정렬
-  void loadAlarms() {
-    setState(() {
-      alarms = Alarm.getAlarms();
-      alarms.sort((a, b) => a.dateTime.isBefore(b.dateTime) ? 0 : 1);
-      enabledAlarms = List<bool>.filled(alarms.length, true);
+  Future<void> loadAlarms() async {
+    final alarmList = await Alarm.getAlarms();
+    final now = DateTime.now();
 
-      for (int i = 0; i < alarms.length; i++) {
-        if (!enabledAlarms[i]) {
-          Alarm.stop(alarms[i].id);
-        }
+    final updatedAlarms = alarmList.map((alarm) {
+      if (alarm.dateTime.isBefore(now)) {
+        return AlarmSettings(
+          id: alarm.id,
+          dateTime: alarm.dateTime.add(const Duration(days: 1)),
+          assetAudioPath: alarm.assetAudioPath,
+          loopAudio: alarm.loopAudio,
+          vibrate: alarm.vibrate,
+          fadeDuration: alarm.fadeDuration,
+          notificationTitle: alarm.notificationTitle,
+          notificationBody: alarm.notificationBody,
+          enableNotificationOnKill: alarm.enableNotificationOnKill,
+        );
       }
+      return alarm;
+    }).toList();
+
+    updatedAlarms.sort((a, b) => a.dateTime.isBefore(b.dateTime) ? 0 : 1);
+
+    setState(() {
+      alarms = updatedAlarms;
+      enabledAlarms = List<bool>.filled(alarms.length, true);
     });
+
+    for (int i = 0; i < alarms.length; i++) {
+      if (!enabledAlarms[i]) {
+        await Alarm.stop(alarms[i].id);
+      }
+    }
   }
 
   Future<void> navigateToRingScreen(AlarmSettings alarmSettings) async {
@@ -67,7 +88,7 @@ class _ExampleAlarmHomeScreenState extends State<ExampleAlarmHomeScreen> {
   }
 
   Future<void> navigateToAlarmScreen(AlarmSettings? settings) async {
-    final res = await showModalBottomSheet<bool?>(
+    final res = await showModalBottomSheet<AlarmSettings?>(
       context: context,
       isScrollControlled: true,
       shape: RoundedRectangleBorder(
@@ -81,14 +102,7 @@ class _ExampleAlarmHomeScreenState extends State<ExampleAlarmHomeScreen> {
       },
     );
 
-    if (res != null && res == true) {
-      loadAlarms();
-      final index = alarms.indexWhere((alarm) => alarm.id == settings!.id);
-      if (index != -1) {
-        enabledAlarms[index] = true;
-        Alarm.set(alarmSettings: alarms[index]);
-      }
-    }
+    await loadAlarms();
   }
 
   Future<void> checkAndroidNotificationPermission() async {
