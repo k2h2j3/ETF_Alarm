@@ -8,6 +8,7 @@ import 'package:eft_alarm/screens/shortcut_button.dart';
 import 'package:eft_alarm/widgets/tile.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ExampleAlarmHomeScreen extends StatefulWidget {
   const ExampleAlarmHomeScreen({Key? key}) : super(key: key);
@@ -33,18 +34,34 @@ class _ExampleAlarmHomeScreenState extends State<ExampleAlarmHomeScreen> {
     subscription ??= Alarm.ringStream.stream.listen(
           (alarmSettings) => navigateToRingScreen(alarmSettings),
     );
+
+    // 저장된 알람 상태 복원
+    SharedPreferences.getInstance().then((prefs) {
+      final savedEnabledAlarms = prefs.getStringList('enabledAlarms');
+      if (savedEnabledAlarms != null) {
+        setState(() {
+          enabledAlarms = savedEnabledAlarms.map((e) => e == 'true').toList();
+        });
+      }
+    });
   }
 
   // 알람 리스트를 가져와서 해당 알람들을 시간순으로 정렬
   Future<void> loadAlarms() async {
     final alarmList = await Alarm.getAlarms();
     final now = DateTime.now();
+    final prefs = await SharedPreferences.getInstance();
 
-    final updatedAlarms = alarmList.map((alarm) {
+    final updatedAlarms = await Future.wait(alarmList.map((alarm) async {
       if (alarm.dateTime.isBefore(now)) {
+        final originalAlarmTimeMillis = prefs.getInt('originalAlarmTime_${alarm.id}');
+        final originalAlarmTime = originalAlarmTimeMillis != null
+            ? DateTime.fromMillisecondsSinceEpoch(originalAlarmTimeMillis)
+            : alarm.dateTime;
+
         return AlarmSettings(
           id: alarm.id,
-          dateTime: alarm.dateTime.add(const Duration(days: 1)),
+          dateTime: originalAlarmTime.add(const Duration(days: 1)),
           assetAudioPath: alarm.assetAudioPath,
           loopAudio: alarm.loopAudio,
           vibrate: alarm.vibrate,
@@ -55,20 +72,26 @@ class _ExampleAlarmHomeScreenState extends State<ExampleAlarmHomeScreen> {
         );
       }
       return alarm;
-    }).toList();
+    }));
 
     updatedAlarms.sort((a, b) => a.dateTime.isBefore(b.dateTime) ? 0 : 1);
+
+    final savedEnabledAlarms = prefs.getStringList('enabledAlarms');
 
     setState(() {
       alarms = updatedAlarms;
       enabledAlarms = List<bool>.filled(alarms.length, true);
-    });
 
-    for (int i = 0; i < alarms.length; i++) {
-      if (!enabledAlarms[i]) {
-        await Alarm.stop(alarms[i].id);
+      if (savedEnabledAlarms != null) {
+        for (int i = 0; i < alarms.length; i++) {
+          final alarmId = alarms[i].id.toString();
+          final index = savedEnabledAlarms.indexOf(alarmId);
+          if (index != -1) {
+            enabledAlarms[i] = savedEnabledAlarms[index + 1] == 'true';
+          }
+        }
       }
-    }
+    });
   }
 
   Future<void> navigateToRingScreen(AlarmSettings alarmSettings) async {
@@ -77,13 +100,9 @@ class _ExampleAlarmHomeScreenState extends State<ExampleAlarmHomeScreen> {
       await Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) =>
-              ExampleAlarmRingScreen(alarmSettings: alarmSettings),
+          builder: (context) => ExampleAlarmRingScreen(alarmSettings: alarmSettings),
         ),
       );
-      setState(() {
-        enabledAlarms[index] = false;
-      });
     }
   }
 
@@ -171,15 +190,45 @@ class _ExampleAlarmHomeScreenState extends State<ExampleAlarmHomeScreen> {
                 Text(alarms[index].notificationBody),
                 Switch(
                   value: enabledAlarms[index],
-                  onChanged: (value) {
+                  onChanged: (value) async {
                     setState(() {
                       enabledAlarms[index] = value;
-                      if (value) {
-                        Alarm.set(alarmSettings: alarms[index]);
-                      } else {
-                        Alarm.stop(alarms[index].id);
-                      }
                     });
+
+                    final prefs = await SharedPreferences.getInstance();
+                    final alarmId = alarms[index].id.toString();
+                    final alarmState = value.toString();
+
+                    final savedEnabledAlarms = prefs.getStringList('enabledAlarms') ?? [];
+                    final savedIndex = savedEnabledAlarms.indexOf(alarmId);
+                    if (savedIndex != -1) {
+                      savedEnabledAlarms[savedIndex + 1] = alarmState;
+                    } else {
+                      savedEnabledAlarms.addAll([alarmId, alarmState]);
+                    }
+                    await prefs.setStringList('enabledAlarms', savedEnabledAlarms);
+
+                    if (value) {
+                      final originalAlarmTimeMillis = prefs.getInt('originalAlarmTime_${alarms[index].id}');
+                      if (originalAlarmTimeMillis != null) {
+                        final originalAlarmTime = DateTime.fromMillisecondsSinceEpoch(originalAlarmTimeMillis);
+                        final enabledAlarm = alarms[index].copyWith(dateTime: originalAlarmTime);
+                        await Alarm.set(alarmSettings: enabledAlarm);
+                        setState(() {
+                          alarms[index] = enabledAlarm;
+                        });
+                      } else {
+                        await Alarm.set(alarmSettings: alarms[index]);
+                      }
+                    } else {
+                      await prefs.setInt('originalAlarmTime_${alarms[index].id}', alarms[index].dateTime.millisecondsSinceEpoch);
+                      final disabledAlarmTime = alarms[index].dateTime.add(const Duration(days: 365));
+                      final disabledAlarm = alarms[index].copyWith(dateTime: disabledAlarmTime);
+                      await Alarm.set(alarmSettings: disabledAlarm);
+                      setState(() {
+                        alarms[index] = disabledAlarm;
+                      });
+                    }
                   },
                 ),
               ],
